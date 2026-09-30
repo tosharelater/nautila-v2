@@ -1,0 +1,233 @@
+---
+import { type Lang } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const words =
+  lang === 'en'
+    ? ['Trust', 'Yield', 'Technology']
+    : ['Confiance', 'Rendement', 'Technologie'];
+---
+
+<div
+  class="splash"
+  data-splash
+  role="dialog"
+  aria-label={lang === 'en' ? 'Nautila intro' : 'Intro Nautila'}
+  data-words={JSON.stringify(words)}
+  data-finale="Nautila"
+>
+  <script is:inline>
+    (function () {
+      var skip =
+        matchMedia('(prefers-reduced-motion: reduce)').matches ||
+        (function () {
+          try {
+            return sessionStorage.getItem('nautila-splash-seen') === '1';
+          } catch (e) {
+            return false;
+          }
+        })();
+      if (skip) {
+        var s = document.currentScript && document.currentScript.parentElement;
+        if (s && s.hasAttribute('data-splash')) s.remove();
+        document.documentElement.classList.remove('splash-lock');
+        window.dispatchEvent(new Event('nautila:splash-done'));
+        return;
+      }
+      document.documentElement.classList.add('splash-lock');
+      // hard cap ≤1.8s — never a second theatrical beat
+      setTimeout(function () {
+        var el = document.querySelector('[data-splash]');
+        if (el && document.documentElement.classList.contains('splash-lock')) {
+          try {
+            sessionStorage.setItem('nautila-splash-seen', '1');
+          } catch (e) {}
+          el.remove();
+          document.documentElement.classList.remove('splash-lock');
+          window.dispatchEvent(new Event('nautila:splash-done'));
+        }
+      }, 1800);
+    })();
+  </script>
+  <div class="splash-glow" aria-hidden="true"></div>
+  <canvas class="splash-canvas" data-splash-canvas aria-hidden="true"></canvas>
+  <p class="splash-tag" data-splash-tag>{lang === 'en' ? 'Your homes, perfectly protected' : 'Vos biens, parfaitement protégés'}</p>
+  <div class="splash-foot" aria-hidden="true">
+    <span>Casablanca · Bouznika · Rabat · Témara</span>
+    <span class="splash-line"><i></i></span>
+  </div>
+  <button class="splash-skip" type="button" data-splash-skip>
+    {lang === 'en' ? 'Skip' : 'Passer'}
+  </button>
+</div>
+
+<style is:global>
+  html:not(.js) .splash {
+    display: none;
+  }
+
+  html.splash-lock,
+  html.splash-lock body {
+    overflow: hidden;
+    height: 100%;
+  }
+
+  .splash {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: grid;
+    place-items: center;
+    background: #14333b;
+    --cx: 50vw;
+    --cy: 45vh;
+    clip-path: circle(150% at var(--cx) var(--cy));
+    transition: clip-path 0.95s cubic-bezier(0.7, 0, 0.2, 1), visibility 0.95s;
+  }
+
+  .splash.is-out {
+    clip-path: circle(0% at var(--cx) var(--cy));
+    visibility: hidden;
+    pointer-events: none;
+  }
+
+  .splash-glow {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(50% 45% at var(--cx) var(--cy), rgba(46, 125, 140, 0.35), transparent 70%),
+      radial-gradient(120% 90% at 50% 120%, #0e262c, transparent 60%);
+    pointer-events: none;
+  }
+
+  .splash-tag {
+    position: absolute;
+    left: 0;
+    right: 0;
+    top: 70%;
+    text-align: center;
+    font-size: clamp(0.66rem, 1.1vw, 0.8rem);
+    letter-spacing: 0.42em;
+    text-transform: uppercase;
+    color: #63a6a0;
+    opacity: 0;
+    transform: translateY(8px);
+    transition: opacity 0.6s var(--ease-out), transform 0.6s var(--ease-out);
+  }
+
+  .splash-tag.show {
+    opacity: 1;
+    transform: none;
+  }
+
+  .splash-foot {
+    position: absolute;
+    left: 50%;
+    bottom: 34px;
+    transform: translateX(-50%);
+    display: grid;
+    justify-items: center;
+    gap: 12px;
+    font-size: 0.62rem;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: rgba(242, 239, 230, 0.35);
+    white-space: nowrap;
+  }
+
+  .splash-line {
+    width: 120px;
+    height: 1px;
+    background: rgba(242, 239, 230, 0.12);
+    overflow: hidden;
+  }
+
+  .splash-line i {
+    display: block;
+    height: 100%;
+    background: #63a6a0;
+    transform: scaleX(0);
+    transform-origin: 0 50%;
+  }
+
+  .splash.is-running .splash-line i {
+    transform: scaleX(1);
+    transition: transform 1.5s linear;
+  }
+
+  @media (max-width: 600px) {
+    .splash-foot span:first-child {
+      display: none;
+    }
+  }
+
+  .splash-canvas {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .splash-skip {
+    position: absolute;
+    bottom: 28px;
+    right: 28px;
+    z-index: 2;
+    padding: 8px 16px;
+    border-radius: 999px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: rgba(242, 239, 230, 0.7);
+    border: 1px solid rgba(242, 239, 230, 0.18);
+    background: rgba(255, 255, 255, 0.04);
+    backdrop-filter: blur(8px);
+    transition: color 0.25s, background 0.25s, border-color 0.25s;
+  }
+
+  .splash-skip:hover {
+    color: #F2EFE6;
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(242, 239, 230, 0.35);
+  }
+</style>
+
+<script>
+  import { createSplash } from '../scripts/splash';
+
+  const root = document.querySelector('[data-splash]') as HTMLElement | null;
+  const canvas = document.querySelector('[data-splash-canvas]') as HTMLCanvasElement | null;
+  if (!root || !canvas) {
+    /* no-op */
+  } else {
+    let words: string[] = ['Confiance', 'Rendement', 'Technologie'];
+    try {
+      words = JSON.parse(root.dataset.words || '[]');
+    } catch {
+      /* keep defaults */
+    }
+
+    const handle = createSplash(root, canvas, {
+      words,
+      finale: root.dataset.finale || 'Nautila',
+      color: '#63A6A0',
+      accent: '#F2EFE6',
+      tagEl: root.querySelector<HTMLElement>('[data-splash-tag]'),
+    });
+
+    const skip = () => handle?.skip();
+    root.querySelector('[data-splash-skip]')?.addEventListener('click', skip);
+    /* Escape only — Space/Enter were too easy to trigger accidentally */
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        e.preventDefault();
+        skip();
+      }
+    });
+  }
+</script>

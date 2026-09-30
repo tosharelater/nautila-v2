@@ -1,0 +1,202 @@
+---
+import { type Lang, t } from '../i18n/ui';
+import { type PageKey, href, LABELS, NAV_PAGES } from '../i18n/routes';
+import ShellLogo from './ShellLogo.astro';
+
+interface Props {
+  lang: Lang;
+  page: PageKey;
+}
+const { lang, page } = Astro.props;
+
+const copy = {
+  fr: {
+    cta: 'Parlons de votre bien',
+    ctaSub: 'Une visite, une estimation claire, puis le même standard que tous nos logements.',
+    btn: 'Nous contacter',
+    pages: 'Pages',
+    zones: 'Territoire',
+    contact: 'Contact',
+  },
+  en: {
+    cta: 'Let’s talk about your home',
+    ctaSub: 'A visit, a clear estimate, then the same standard as every home we manage.',
+    btn: 'Contact us',
+    pages: 'Pages',
+    zones: 'Territory',
+    contact: 'Contact',
+  },
+}[lang];
+
+const zones = ['Casablanca', 'Bouznika', 'Rabat', 'Témara-Harhoura'];
+const year = 2026;
+---
+
+<footer class="footer" data-footer>
+  {
+    page !== 'contact' && page !== 'home' && (
+      <div class="container f-cta">
+        <h2 class="f-cta-title" data-fade>
+          {copy.cta}
+        </h2>
+        <div class="f-cta-side" data-fade>
+          <p>{copy.ctaSub}</p>
+          <a class="btn btn-primary" href={href(lang, 'contact')} data-magnetic>
+            {copy.btn} <span class="arrow">→</span>
+          </a>
+        </div>
+      </div>
+    )
+  }
+
+  <div class="container f-grid">
+    <div class="f-brand">
+      <a class="brand" href={href(lang, 'home')} aria-label="Nautila — home">
+        <ShellLogo size={26} color="#63A6A0" />
+        <span>Nautila</span>
+      </a>
+      <p class="tagline">{t(lang, 'footer.tagline')}</p>
+    </div>
+
+    <nav class="f-col" aria-label={copy.pages}>
+      <h3>{copy.pages}</h3>
+      {(['home', ...NAV_PAGES] as PageKey[]).map((p) => <a href={href(lang, p)}>{LABELS[p][lang]}</a>)}
+    </nav>
+
+    <nav class="f-col" aria-label={copy.zones}>
+      <h3>{copy.zones}</h3>
+      {zones.map((z) => <a href={href(lang, 'homes')}>{z}</a>)}
+    </nav>
+
+    <div class="f-col">
+      <h3>{copy.contact}</h3>
+      <a href="mailto:hello@nautila.ma">hello@nautila.ma</a>
+      <a href={href(lang, 'contact')}>{LABELS.contact[lang]}</a>
+      <a href={href(lang, 'contact')}>{t(lang, 'footer.legal')}</a>
+    </div>
+  </div>
+
+  <div class="container f-bottom">
+    <span>© {year} Nautila. {t(lang, 'footer.rights')}</span>
+    <span>{lang === 'en' ? 'Built on the golden ratio — φ = 1.618' : 'Construit sur le nombre d’or — φ = 1,618'}</span>
+  </div>
+</footer>
+
+<style>
+  .footer {
+    position: relative;
+    overflow: hidden;
+    background: #0f2a30;
+    color: #f2efe6;
+    padding-top: clamp(60px, 8vw, 110px);
+  }
+
+  .f-cta {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    gap: 30px 60px;
+    align-items: end;
+    padding-bottom: clamp(50px, 7vw, 90px);
+    border-bottom: 1px solid rgba(242, 239, 230, 0.1);
+  }
+
+  .f-cta-title {
+    color: #f2efe6;
+    font-weight: 400;
+    font-size: clamp(2.4rem, 6vw, 5rem);
+    line-height: 1;
+  }
+
+  .f-cta-side {
+    display: grid;
+    gap: 22px;
+    justify-items: start;
+  }
+
+  .f-cta-side p {
+    color: rgba(242, 239, 230, 0.65);
+    max-width: 40ch;
+  }
+
+  .f-grid {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr 1fr 1fr;
+    gap: 36px;
+    padding-block: 56px 20px;
+  }
+
+  .brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-family: var(--font-display);
+    font-weight: 500;
+    font-size: 1rem;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+  }
+
+  .tagline {
+    margin-top: 14px;
+    color: rgba(242, 239, 230, 0.55);
+    font-size: 0.92rem;
+  }
+
+  .f-col {
+    display: grid;
+    gap: 10px;
+    align-content: start;
+  }
+
+  .f-col h3 {
+    color: #63a6a0;
+    font-family: var(--font-body);
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    margin-bottom: 6px;
+  }
+
+  .f-col a {
+    width: fit-content;
+    font-size: 0.93rem;
+    color: rgba(242, 239, 230, 0.72);
+    background: linear-gradient(#63a6a0, #63a6a0) 0 100% / 0 1px no-repeat;
+    transition: color 0.25s, background-size 0.35s var(--ease-out);
+  }
+
+  .f-col a:hover {
+    color: #f2efe6;
+    background-size: 100% 1px;
+  }
+
+  .f-bottom {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 10px;
+    padding-block: 22px 30px;
+    font-size: 0.78rem;
+    color: rgba(242, 239, 230, 0.45);
+    border-top: 1px solid rgba(242, 239, 230, 0.08);
+  }
+
+  @media (max-width: 860px) {
+    .f-cta,
+    .f-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+    .f-cta-title,
+    .f-brand,
+    .f-cta-side {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .f-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

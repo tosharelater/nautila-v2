@@ -1,0 +1,251 @@
+---
+import { type Lang, t } from '../i18n/ui';
+
+interface Props {
+  lang: Lang;
+}
+const { lang } = Astro.props;
+
+const SPIRAL =
+  'M100 0 A100 100 0 0 1 0 100 A61.8 61.8 0 0 1 -61.8 38.2 A38.2 38.2 0 0 1 -23.61 0 A23.61 23.61 0 0 1 0 23.61 A14.59 14.59 0 0 1 -14.59 38.2';
+---
+
+<section class="hero" id="top" data-hero>
+  <canvas class="hero-gl" data-hero-gl aria-hidden="true"></canvas>
+
+  <!-- shown until WebGL is ready (and if it is unavailable) -->
+  <svg class="hero-fallback" viewBox="-70 -8 176 116" fill="none" aria-hidden="true">
+    <path d={SPIRAL} stroke="#63A6A0" stroke-width="2.4" stroke-linecap="round" pathLength="1"></path>
+  </svg>
+
+  <div class="container hero-inner">
+    <p class="kicker hero-in" style="--d:0.1s">{t(lang, 'hero.kicker')}</p>
+    <h1 class="hero-title">
+      <span class="line"><span class="hero-in" style="--d:0.2s">{t(lang, 'hero.title.a')}</span></span>
+      <span class="line accent"><span class="hero-in" style="--d:0.32s">{t(lang, 'hero.title.b')}</span></span>
+    </h1>
+    <p class="hero-text hero-in" style="--d:0.5s">{t(lang, 'hero.text')}</p>
+    <div class="hero-actions hero-in" style="--d:0.62s">
+      <a class="btn btn-primary" href="#contact">{t(lang, 'hero.cta')} <span class="arrow">→</span></a>
+      <a class="btn btn-outline" href="#services">{t(lang, 'hero.cta.secondary')}</a>
+    </div>
+  </div>
+
+  <a class="hero-scroll" href="#services" aria-label={lang === 'en' ? 'Scroll' : 'Défiler'}><span></span></a>
+</section>
+
+<script>
+  const hero = document.querySelector<HTMLElement>('[data-hero]');
+  const canvas = document.querySelector<HTMLCanvasElement>('[data-hero-gl]');
+  if (hero && canvas) {
+    // Vera freeze: 3D off below 768px — static SVG still; IO pause already in hero3d
+    const allow3d =
+      window.matchMedia('(min-width: 768px)').matches &&
+      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!allow3d) {
+      /* keep fallback spiral */
+    } else {
+      const boot = () =>
+        import('../scripts/hero3d')
+          .then(({ createHero3D }) => {
+            createHero3D(canvas, hero);
+            requestAnimationFrame(() => hero.classList.add('gl-on'));
+          })
+          .catch(() => {
+            /* SVG spiral stays */
+          });
+      'requestIdleCallback' in window ? requestIdleCallback(boot, { timeout: 1200 }) : setTimeout(boot, 300);
+    }
+  }
+</script>
+
+<style>
+  .hero {
+    position: relative;
+    min-height: 100vh;
+    min-height: 100svh;
+    display: flex;
+    align-items: center;
+    overflow: hidden;
+    background: #14333b;
+    color: #f2efe6;
+    padding-block: calc(var(--nav-h) + 30px) 80px;
+  }
+
+  .hero-gl {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    transition: opacity 1.4s ease;
+  }
+
+  .hero.gl-on .hero-gl {
+    opacity: 1;
+  }
+
+  .hero-fallback {
+    position: absolute;
+    right: 4vw;
+    top: 50%;
+    width: min(46vw, 640px);
+    transform: translateY(-50%);
+    opacity: 0.5;
+    transition: opacity 1s ease;
+  }
+
+  .hero-fallback path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: hero-draw 2.6s 0.3s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+  }
+
+  .hero.gl-on .hero-fallback {
+    opacity: 0;
+  }
+
+  @keyframes hero-draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .hero-inner {
+    position: relative;
+  }
+
+  .hero .kicker {
+    color: #63a6a0;
+  }
+
+  .hero .kicker::before {
+    background: #63a6a0;
+  }
+
+  .hero-title {
+    margin-top: 22px;
+    max-width: 11ch;
+    color: #f2efe6;
+    font-weight: 400;
+    font-size: clamp(2.8rem, 7vw, 6.2rem);
+    line-height: 1;
+    letter-spacing: -0.02em;
+  }
+
+  .hero-title .line {
+    display: block;
+    overflow: hidden;
+    padding-bottom: 0.06em;
+  }
+
+  .hero-title .line > span {
+    display: inline-block;
+  }
+
+  .hero-title .accent {
+    color: #63a6a0;
+    font-weight: 500;
+  }
+
+  .hero-text {
+    margin-top: 26px;
+    max-width: 44ch;
+    font-size: clamp(1rem, 1.4vw, 1.18rem);
+    color: rgba(242, 239, 230, 0.78);
+  }
+
+  .hero-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin-top: 34px;
+  }
+
+  .btn-outline {
+    color: #f2efe6;
+    border: 1px solid rgba(242, 239, 230, 0.35);
+  }
+
+  .btn-outline:hover {
+    background: rgba(242, 239, 230, 0.1);
+  }
+
+  /* entrance — plays after the splash lifts */
+  .hero-in {
+    animation: hero-rise 1.1s var(--d) cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    animation-play-state: paused;
+  }
+
+  :global(html:not(.splash-lock)) .hero-in {
+    animation-play-state: running;
+  }
+
+  .hero-title .hero-in {
+    animation-name: hero-line;
+  }
+
+  @keyframes hero-rise {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+  }
+
+  @keyframes hero-line {
+    from {
+      transform: translateY(105%);
+    }
+  }
+
+  .hero-scroll {
+    position: absolute;
+    left: 50%;
+    bottom: 26px;
+    width: 1px;
+    height: 56px;
+    background: rgba(242, 239, 230, 0.18);
+    overflow: hidden;
+  }
+
+  .hero-scroll span {
+    position: absolute;
+    left: 0;
+    width: 1px;
+    height: 22px;
+    background: #63a6a0;
+    animation: hero-scroll 2s ease-in-out infinite;
+  }
+
+  @keyframes hero-scroll {
+    from {
+      top: -22px;
+    }
+    to {
+      top: 56px;
+    }
+  }
+
+  @media (max-width: 760px) {
+    .hero {
+      align-items: flex-end;
+    }
+    .hero.gl-on .hero-gl {
+      opacity: 0.55;
+    }
+    .hero-fallback {
+      width: 90vw;
+      top: 28%;
+      right: -10vw;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .hero-in,
+    .hero-fallback path,
+    .hero-scroll span {
+      animation: none;
+      stroke-dashoffset: 0;
+    }
+  }
+</style>
