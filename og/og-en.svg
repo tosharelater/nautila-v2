@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630" role="img" aria-label="Nautila — Your homes, perfectly protected">
+  <rect width="1200" height="630" fill="#F2EFE6"/>
+  <!-- soft wash -->
+  <circle cx="980" cy="120" r="280" fill="#14333B" opacity="0.04"/>
+  <circle cx="180" cy="520" r="220" fill="#2E7D8C" opacity="0.05"/>
+  <!-- nautilus spiral (brand path, scaled & placed) -->
+  <g transform="translate(780 315) scale(2.85) translate(-20 -50)" fill="none" stroke="#14333B" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" opacity="0.88">
+    <path d="M100 0 A100 100 0 0 1 0 100 A61.8 61.8 0 0 1 -61.8 38.2 A38.2 38.2 0 0 1 -23.61 0 A23.61 23.61 0 0 1 0 23.61 A14.59 14.59 0 0 1 -14.59 38.2"/>
+  </g>
+  <!-- wordmark + tagline -->
+  <text x="88" y="290" font-family="Georgia, 'Times New Roman', serif" font-size="92" font-weight="400" letter-spacing="0.08em" fill="#14333B">Nautila</text>
+  <text x="88" y="360" font-family="Helvetica, Arial, sans-serif" font-size="28" font-weight="400" letter-spacing="0.02em" fill="#2E7D8C">Your homes, perfectly protected</text>
+  <!-- accent rule -->
+  <rect x="88" y="248" width="48" height="3" rx="1.5" fill="#63A6A0"/>
+</svg>
