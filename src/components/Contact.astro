@@ -7,6 +7,11 @@ interface Props {
 const { lang } = Astro.props;
 
 const EMAIL = 'hello@nautila.ma';
+// Formspree: set PUBLIC_FORMSPREE_ENDPOINT (full URL) or PUBLIC_FORMSPREE_ID; empty = disabled-safe (no fake sent).
+const formspreeId = (import.meta.env.PUBLIC_FORMSPREE_ID as string | undefined)?.trim() ?? '';
+const formspree =
+  (import.meta.env.PUBLIC_FORMSPREE_ENDPOINT as string | undefined)?.trim() ||
+  (formspreeId ? `https://formspree.io/f/${formspreeId}` : '');
 
 const copy = {
   fr: {
@@ -23,8 +28,13 @@ const copy = {
     zones: ['Casablanca', 'Bouznika', 'Témara-Harhoura', 'Rabat'],
     types: ['Studio', '2 pièces', '3 pièces', '4 pièces +', 'Villa'],
     send: 'Envoyer la demande',
+    sending: 'Envoi en cours…',
     subject: 'Demande propriétaire — Nautila',
-    ok: 'Merci. Votre messagerie s’ouvre avec la demande pré-remplie.',
+    ok: 'Merci. Votre demande est bien partie — nous revenons vers vous sous 24 h pour organiser une visite.',
+    errMissing:
+      'Envoi indisponible pour le moment. Contactez-nous à hello@nautila.ma',
+    errSend:
+      'L’envoi n’a pas abouti. Réessayez, ou écrivez-nous à hello@nautila.ma.',
   },
   en: {
     kicker: 'Contact',
@@ -40,8 +50,13 @@ const copy = {
     zones: ['Casablanca', 'Bouznika', 'Témara-Harhoura', 'Rabat'],
     types: ['Studio', '2 rooms', '3 rooms', '4 rooms +', 'Villa'],
     send: 'Send request',
+    sending: 'Sending…',
     subject: 'Owner enquiry — Nautila',
-    ok: 'Thank you. Your email app opens with the request pre-filled.',
+    ok: 'Thank you. Your request is on its way — we will get back within 24 hours to arrange a visit.',
+    errMissing:
+      'Sending is unavailable right now. Please contact us at hello@nautila.ma',
+    errSend:
+      'Something went wrong. Please try again, or email hello@nautila.ma.',
   },
 }[lang];
 ---
@@ -66,7 +81,17 @@ const copy = {
         <a class="ct-mail" href={`mailto:${EMAIL}`}>{EMAIL}</a>
       </div>
 
-      <form class="ct-form" data-fade data-contact data-email={EMAIL} data-subject={copy.subject}>
+      <form
+        class="ct-form"
+        data-fade
+        data-contact
+        data-endpoint={formspree}
+        data-subject={copy.subject}
+        data-sending={copy.sending}
+        data-send={copy.send}
+        data-err-missing={copy.errMissing}
+        data-err-send={copy.errSend}
+      >
         <label class="f">
           <span>{copy.name}</span>
           <input name="name" autocomplete="name" required />
@@ -95,8 +120,11 @@ const copy = {
           <span>{copy.msg}</span>
           <textarea name="message" rows="3"></textarea>
         </label>
-        <button class="btn btn-light" type="submit">{copy.send} <span class="arrow">→</span></button>
+        <button class="btn btn-light" type="submit" data-submit>
+          {copy.send} <span class="arrow">→</span>
+        </button>
         <p class="ct-ok" data-ok hidden>{copy.ok}</p>
+        <p class="ct-err" data-err hidden></p>
       </form>
     </div>
   </div>
@@ -105,19 +133,76 @@ const copy = {
 <script>
   const form = document.querySelector<HTMLFormElement>('[data-contact]');
   if (form) {
-    form.addEventListener('submit', (e) => {
+    const btn = form.querySelector<HTMLButtonElement>('[data-submit]');
+    const ok = form.querySelector<HTMLElement>('[data-ok]');
+    const err = form.querySelector<HTMLElement>('[data-err]');
+    const fields = () =>
+      form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>('input, select, textarea');
+
+    let busy = false;
+
+    const setError = (msg: string) => {
+      if (ok) ok.hidden = true;
+      if (err) {
+        err.textContent = msg;
+        err.hidden = false;
+      }
+    };
+
+    const setSuccess = () => {
+      if (err) err.hidden = true;
+      if (ok) ok.hidden = false;
+      fields().forEach((el) => (el.disabled = true));
+      if (btn) btn.disabled = true;
+    };
+
+    const setLoading = (on: boolean) => {
+      busy = on;
+      if (btn) {
+        btn.disabled = on;
+        btn.setAttribute('aria-busy', on ? 'true' : 'false');
+        const label = on ? form.dataset.sending : form.dataset.send;
+        if (label) btn.innerHTML = on ? label : `${label} <span class="arrow">→</span>`;
+      }
+    };
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
+      if (busy) return;
       if (!form.reportValidity()) return;
-      const fd = new FormData(form);
-      const lines = [...fd.entries()].map(([k, v]) => `${k}: ${v}`).join('\n');
-      const href = `mailto:${form.dataset.email}?subject=${encodeURIComponent(form.dataset.subject || '')}&body=${encodeURIComponent(lines)}`;
-      window.location.href = href;
-      form.querySelector<HTMLElement>('[data-ok]')!.hidden = false;
+
+      if (err) err.hidden = true;
+
+      const endpoint = (form.dataset.endpoint || '').trim();
+      if (!endpoint) {
+        setError(form.dataset.errMissing || '');
+        return;
+      }
+
+      setLoading(true);
+      try {
+        const fd = new FormData(form);
+        fd.set('_subject', form.dataset.subject || '');
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { Accept: 'application/json' },
+          body: fd,
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        setSuccess();
+      } catch {
+        setError(form.dataset.errSend || '');
+        setLoading(false);
+      }
     });
   }
 </script>
 
 <style>
+  .contact.section {
+    padding-top: calc(clamp(90px, 12vw, 150px) + 8px);
+  }
+
   .ct-band {
     position: relative;
     overflow: hidden;
@@ -275,14 +360,33 @@ const copy = {
     background: rgba(20, 51, 59, 0.9);
   }
 
+  .f input:disabled,
+  .f select:disabled,
+  .f textarea:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+
   .ct-form .btn {
     justify-self: start;
     margin-top: 6px;
   }
 
+  .ct-form .btn[aria-busy='true'] {
+    opacity: 0.72;
+    cursor: wait;
+  }
+
   .ct-ok {
     font-size: 0.88rem;
     color: #63a6a0;
+    margin-top: 2px;
+  }
+
+  .ct-err {
+    font-size: 0.88rem;
+    color: #e8a090;
+    margin-top: 2px;
   }
 
   @media (max-width: 900px) {

@@ -15,7 +15,7 @@ const copy = {
     title: 'Lumière atlantique, fin de journée',
     lead: 'Lin, bois clair, laiton : la lumière atlantique de fin de journée, dans chaque logement.',
     hint: 'Glissez pour parcourir',
-    note: 'Photos d’illustration',
+    note: 'Photos d’illustration — remplacées dès les prises de vue Nautila',
     items: [
       { zone: 'Harhoura', ambiance: 'Vue océan', m: '3 pièces · linge hôtelier · serrure connectée', ph: 'photo — séjour, lumière 17 h', w: 'wide', img: 'photo-1778137736743-e649b1e954d3' },
       { zone: 'Agdal · Rabat', ambiance: 'Chambre douce', m: '2 pièces · check-in digital', ph: 'photo — chambre', w: '', img: 'photo-1783990350684-71c38af04a8a' },
@@ -30,7 +30,7 @@ const copy = {
     title: 'Atlantic light, late afternoon',
     lead: 'Linen, light wood, brass: late-afternoon Atlantic light, in every home.',
     hint: 'Drag to browse',
-    note: 'Illustrative photos',
+    note: 'Illustrative photos — replaced once Nautila shoots are in',
     items: [
       { zone: 'Harhoura', ambiance: 'Ocean view', m: '3 rooms · hotel linen · connected lock', ph: 'photo — living room, 5 pm light', w: 'wide', img: 'photo-1778137736743-e649b1e954d3' },
       { zone: 'Agdal · Rabat', ambiance: 'Soft bedroom', m: '2 rooms · digital check-in', ph: 'photo — bedroom', w: '', img: 'photo-1783990350684-71c38af04a8a' },
@@ -82,7 +82,7 @@ const copy = {
 
   <div class="container gal-foot">
     <span class="gal-hint">{copy.hint}</span>
-    <span class="gal-hint">{copy.note}</span>
+    <span class="gal-hint gal-note">{copy.note}</span>
     <div class="gal-bar"><span data-gal-bar></span></div>
   </div>
 </section>
@@ -260,6 +260,10 @@ const copy = {
     white-space: nowrap;
   }
 
+  .gal-note {
+    min-width: 0;
+  }
+
   @media (max-width: 600px) {
     .gal-foot {
       flex-wrap: wrap;
@@ -268,6 +272,16 @@ const copy = {
     .gal-bar {
       order: 3;
       flex-basis: 100%;
+    }
+  }
+
+  /* Vera soft nit: footnote was clipping ≤420px */
+  @media (max-width: 420px) {
+    .gal-note {
+      white-space: normal;
+      letter-spacing: 0.12em;
+      line-height: 1.45;
+      flex: 1 1 100%;
     }
   }
 

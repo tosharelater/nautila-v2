@@ -214,7 +214,8 @@ export function createHero3D(canvas: HTMLCanvasElement, host: HTMLElement, opts:
     depthWrite: false,
     blending: THREE.AdditiveBlending,
   });
-  group.add(new THREE.Mesh(taperedTube(curve, 240, 12, 0.42), glowMat));
+  const glow = new THREE.Mesh(taperedTube(curve, 240, 12, 0.42), glowMat);
+  group.add(glow);
 
   // --- Layout ------------------------------------------------------------
   let W = 1;
@@ -240,14 +241,11 @@ export function createHero3D(canvas: HTMLCanvasElement, host: HTMLElement, opts:
 
   // --- Interaction -------------------------------------------------------
   const mouse = { x: 0, y: 0, sx: 0, sy: 0 };
-  window.addEventListener(
-    'pointermove',
-    (e) => {
-      mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
-      mouse.y = -((e.clientY / window.innerHeight) * 2 - 1);
-    },
-    { passive: true }
-  );
+  const onPointerMove = (e: PointerEvent) => {
+    mouse.x = (e.clientX / window.innerWidth) * 2 - 1;
+    mouse.y = -((e.clientY / window.innerHeight) * 2 - 1);
+  };
+  window.addEventListener('pointermove', onPointerMove, { passive: true });
 
   const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const t0 = performance.now();
@@ -312,10 +310,36 @@ export function createHero3D(canvas: HTMLCanvasElement, host: HTMLElement, opts:
     cancelAnimationFrame(raf);
   };
 
-  const io = new IntersectionObserver((en) => en.forEach((x) => (x.isIntersecting ? start() : stop())));
+  let inView = false;
+  const io = new IntersectionObserver((en) =>
+    en.forEach((x) => {
+      inView = x.isIntersecting;
+      if (inView) start();
+      else stop();
+    })
+  );
   io.observe(host);
-  document.addEventListener('visibilitychange', () => (document.hidden ? stop() : start()));
+  const onVisibility = () => {
+    if (document.hidden) stop();
+    else if (inView) start();
+  };
+  document.addEventListener('visibilitychange', onVisibility);
 
   if (reduced) render();
-  return { destroy: () => (stop(), io.disconnect(), renderer.dispose()) };
+  return {
+    destroy: () => {
+      stop();
+      io.disconnect();
+      window.removeEventListener('resize', resize);
+      window.removeEventListener('pointermove', onPointerMove);
+      document.removeEventListener('visibilitychange', onVisibility);
+      tube.geometry.dispose();
+      tubeMat.dispose();
+      glow.geometry.dispose();
+      glowMat.dispose();
+      bg.geometry.dispose();
+      bgMat.dispose();
+      renderer.dispose();
+    },
+  };
 }

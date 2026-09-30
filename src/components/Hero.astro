@@ -39,22 +39,50 @@ const SPIRAL =
   const canvas = document.querySelector<HTMLCanvasElement>('[data-hero-gl]');
   if (hero && canvas) {
     // Vera freeze: 3D off below 768px — static SVG still; IO pause already in hero3d
-    const allow3d =
-      window.matchMedia('(min-width: 768px)').matches &&
-      !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    if (!allow3d) {
-      /* keep fallback spiral */
-    } else {
-      const boot = () =>
-        import('../scripts/hero3d')
-          .then(({ createHero3D }) => {
-            createHero3D(canvas, hero);
-            requestAnimationFrame(() => hero.classList.add('gl-on'));
-          })
-          .catch(() => {
-            /* SVG spiral stays */
-          });
+    const mq = window.matchMedia('(min-width: 768px)');
+    const reducedMq = window.matchMedia('(prefers-reduced-motion: reduce)');
+    type Hero3DHandle = { destroy: () => void };
+    let instance: Hero3DHandle | null = null;
+    let booting = false;
+
+    const teardown = () => {
+      if (instance) {
+        instance.destroy();
+        instance = null;
+      }
+      hero.classList.remove('gl-on');
+    };
+
+    const boot = () => {
+      if (booting || instance || !mq.matches || reducedMq.matches) return;
+      booting = true;
+      import('../scripts/hero3d')
+        .then(({ createHero3D }) => {
+          if (!mq.matches || reducedMq.matches) {
+            booting = false;
+            return;
+          }
+          teardown();
+          instance = createHero3D(canvas, hero);
+          requestAnimationFrame(() => hero.classList.add('gl-on'));
+        })
+        .catch(() => {
+          /* SVG spiral stays */
+        })
+        .finally(() => {
+          booting = false;
+        });
+    };
+
+    const onMqChange = () => {
+      if (!mq.matches) teardown();
+      else if (!reducedMq.matches) boot();
+    };
+
+    if (mq.matches && !reducedMq.matches) {
       'requestIdleCallback' in window ? requestIdleCallback(boot, { timeout: 1200 }) : setTimeout(boot, 300);
+      // Soft nit: tear down / re-boot when crossing the 768px breakpoint
+      mq.addEventListener('change', onMqChange);
     }
   }
 </script>
